@@ -6,33 +6,44 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-urls = [
-    "https://lilianweng.github.io/posts/2023-06-23-agent/",
-    "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
-    "https://lilianweng.github.io/posts/2023-10-25-adv-attack-llm/",
-]
 
-# Load documents
-docs = [WebBaseLoader(url).load() for url in urls]
-docs_list = [item for sublist in docs for item in sublist]
+class VectorStore:
+    def __init__(self):
+        self.embedding = OpenAIEmbeddings(model="text-embedding-3-large")
+        self.text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+            chunk_size=1000, chunk_overlap=200
+        )
+        self.vectorstore = SKLearnVectorStore(
+            embedding=OpenAIEmbeddings(model="text-embedding-3-large")
+        )
+        self.retriever = self.vectorstore.as_retriever(
+            search_type="similarity_score_threshold",
+            search_kwargs={"score_threshold": 0.6},
+        )
 
-# Split documents
-text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-    chunk_size=1000, chunk_overlap=200
-)
-doc_splits = text_splitter.split_documents(docs_list)
+    def insert_doc(self, url: str):
+        docs = WebBaseLoader(url).load()
+        doc_splits = self.text_splitter.split_documents(docs)
+        self.vectorstore.add_documents(doc_splits)
 
-# Add to vectorDB
-vectorstore = SKLearnVectorStore.from_documents(
-    documents=doc_splits,
-    embedding=OpenAIEmbeddings(model="text-embedding-3-large"),
-)
+    def retrieve_doc(self, question: str):
+        return self.retriever.invoke(question)
 
-# Create retriever
-retriever = vectorstore.as_retriever(search_kwargs={"k": 3, "score_threshold": 0.8})
 
 if __name__ == "__main__":
+    urls = [
+        "https://lilianweng.github.io/posts/2023-06-23-agent/",
+        "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
+        "https://lilianweng.github.io/posts/2023-10-25-adv-attack-llm/",
+    ]
+    vector_store = VectorStore()
+
+    for i, v in enumerate(urls):
+        vector_store.insert_doc(v)
+
     question = "What is Chain of thought prompting?"
-    docs = retriever.invoke(question)
-    print(docs)
+    docs = vector_store.retrieve_doc(question)
+    print(len(docs))
+
     doc_txt = docs[1].page_content
+    print(doc_txt)

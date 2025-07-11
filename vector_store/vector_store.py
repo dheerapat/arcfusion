@@ -7,8 +7,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class VectorStore:
+class URLVectorStore:
     def __init__(self):
+        urls = [
+            "https://lilianweng.github.io/posts/2023-06-23-agent/",
+            "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
+            "https://lilianweng.github.io/posts/2023-10-25-adv-attack-llm/",
+        ]
+
         self.embedding = OpenAIEmbeddings(model="text-embedding-3-large")
         self.text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
             chunk_size=1000, chunk_overlap=200
@@ -21,6 +27,9 @@ class VectorStore:
             search_kwargs={"score_threshold": 0.6},
         )
 
+        for _, v in enumerate(urls):
+            self.insert_doc(v)
+
     def insert_doc(self, url: str):
         docs = WebBaseLoader(url).load()
         doc_splits = self.text_splitter.split_documents(docs)
@@ -31,15 +40,15 @@ class VectorStore:
 
 
 if __name__ == "__main__":
-    urls = [
-        "https://lilianweng.github.io/posts/2023-06-23-agent/",
-        "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
-        "https://lilianweng.github.io/posts/2023-10-25-adv-attack-llm/",
-    ]
-    vector_store = VectorStore()
+    # urls = [
+    #     "https://lilianweng.github.io/posts/2023-06-23-agent/",
+    #     "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
+    #     "https://lilianweng.github.io/posts/2023-10-25-adv-attack-llm/",
+    # ]
+    vector_store = URLVectorStore()
 
-    for i, v in enumerate(urls):
-        vector_store.insert_doc(v)
+    # for i, v in enumerate(urls):
+    #     vector_store.insert_doc(v)
 
     question = "What is Chain of thought prompting?"
     docs = vector_store.retrieve_doc(question)

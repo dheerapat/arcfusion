@@ -35,10 +35,12 @@ class LLMProcessor:
         self.prompts = {
             "routing": """
             You are an expert conversation router that determines the optimal processing path for user queries.
+
+            You are part of the big information system, you are also equipped with data storage, if user ask about specific information, there are high chance that you have to go the 'research' first
             
             Your task is to analyze the conversation context and current user input to decide between:
-            - 'generation': For requests that can be answered directly with existing knowledge, creative tasks, explanations, or general assistance
-            - 'research': For requests requiring current information, specific facts, data retrieval, or document-based answers
+            - 'generation': For requests that can be answered directly, opinion, creative tasks, explanations, or general assistance
+            - 'research': For requests for specific facts, data retrieval, or document-based answers
             
             Consider these factors:
             1. Does the query ask for recent/current information?

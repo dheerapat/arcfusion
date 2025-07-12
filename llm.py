@@ -3,7 +3,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, Base
 from langchain_core.documents import Document
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 
 load_dotenv()
 
@@ -47,6 +47,7 @@ class LLMProcessor:
             4. Does it involve creative or analytical tasks?
             
             Route to 'research' if the query involves:
+            - User ask a question for specific topic, you have to research first.
             - Current events, news, or time-sensitive information
             - Specific statistics, data, or factual claims that need verification
             - Questions about documents, studies, or sources
@@ -105,6 +106,30 @@ class LLMProcessor:
             
             Analyze whether these documents are relevant to answering the user's question.
             """,
+            "answer_generation": """
+            You are an expert research assistant that provides comprehensive, accurate, and well-structured answers based on provided documents and context.
+            
+            Your task is to:
+            1. Analyze the user's question thoroughly
+            2. Review all provided documents for relevant information
+            3. Synthesize the information into a coherent, informative response
+            4. Ensure accuracy and avoid speculation beyond what's supported by the documents
+            
+            Guidelines for generating answers:
+            - Start with a direct answer to the user's question when possible
+            - Use information from the documents to support your response
+            - Organize information logically and clearly
+            - Cite or reference key information when relevant
+            - If documents contain conflicting information, acknowledge this
+            - If the question cannot be fully answered from the documents, state what information is available
+            - Maintain an informative but conversational tone
+            - Be comprehensive but concise
+            
+            Available Context Documents:
+            {context_documents}
+            
+            Based on the provided documents, answer the user's question thoroughly and accurately.
+            """,
         }
 
     def route_conversation(
@@ -142,7 +167,7 @@ class LLMProcessor:
             # Create documents text for the prompt
             documents_text = ""
             for i, doc in enumerate(docs, 1):
-                documents_text += f"Document {i}:\n{doc.page_content}\n\n"
+                documents_text += f"Document {i}:\n{doc}\n\n"
 
             system_prompt = self.prompts["document_review"].format(
                 documents_text=documents_text
@@ -158,6 +183,39 @@ class LLMProcessor:
         except Exception as e:
             print(f"Error reviewing documents: {e}")
             return None
+
+    def generate_answer(
+        self,
+        documents: List[str],
+        user_question: str,
+        chat_history: List[BaseMessage] = [],
+    ):
+        try:
+            context_documents = ""
+            for i, doc in enumerate(documents, 1):
+                context_documents += f"Document {i}:\n{doc.strip()}\n\n"
+
+            system_prompt = self.prompts["answer_generation"].format(
+                context_documents=context_documents
+            )
+
+            conversation: List[BaseMessage] = [SystemMessage(content=system_prompt)]
+
+            if chat_history:
+                conversation.extend(chat_history)
+
+            conversation.append(HumanMessage(content=user_question))
+
+            response = self.llm.invoke(conversation)
+
+            if hasattr(response, "content"):
+                return response.content
+            else:
+                return str(response)
+
+        except Exception as e:
+            print(f"Error generating answer: {e}")
+            return f"I encountered an error while generating the answer: {str(e)}"
 
 
 if __name__ == "__main__":

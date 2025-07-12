@@ -22,10 +22,7 @@ class URLVectorStore:
         self.vectorstore = SKLearnVectorStore(
             embedding=OpenAIEmbeddings(model="text-embedding-3-large")
         )
-        self.retriever = self.vectorstore.as_retriever(
-            search_type="similarity_score_threshold",
-            search_kwargs={"score_threshold": 0.6},
-        )
+        self.retriever = self.vectorstore.as_retriever(kwargs={"k": 3})
 
         for _, v in enumerate(urls):
             self.insert_doc(v)

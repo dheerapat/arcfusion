@@ -67,3 +67,10 @@ curl -X 'POST' \
 - Each API call = new graph initialization (new PDF loading)
 - PDF upload during FastAPI running session
 - Clear memory during FastAPI running session
+
+#### Improvement
+- Proper project structure
+- Proper Vector DB, not in-memory DB
+- Proper multiturn conversation support
+- Ability to add additional PDF documents to vector DB
+- Proper session management

@@ -1,5 +1,6 @@
-import operator
 import json
+import typer
+from rich import print
 from typing import Optional
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph
@@ -89,35 +90,42 @@ def generation(state):
     return {"generation": generation}
 
 
-workflow = StateGraph(GraphState)
+def create_workflow():
+    workflow = StateGraph(GraphState)
 
-workflow.add_node("generate_keyword", generate_keyword)
-workflow.add_node("retriever", retriever)
-workflow.add_node("review_documents", review_documents)
-workflow.add_node("generation", generation)
-workflow.add_node("web_search", web_search)
+    workflow.add_node("generate_keyword", generate_keyword)
+    workflow.add_node("retriever", retriever)
+    workflow.add_node("review_documents", review_documents)
+    workflow.add_node("generation", generation)
+    workflow.add_node("web_search", web_search)
 
-workflow.set_conditional_entry_point(
-    routing_conversation, {"research": "generate_keyword", "generation": "generation"}
-)
-workflow.add_edge("generate_keyword", "retriever")
-workflow.add_conditional_edges(
-    "retriever",
-    review_documents,
-    {"relevant": "generation", "not_relevant": "web_search"},
-)
-workflow.add_edge("web_search", "generation")
+    workflow.set_conditional_entry_point(
+        routing_conversation, {"research": "generate_keyword", "generation": "generation"}
+    )
+    workflow.add_edge("generate_keyword", "retriever")
+    workflow.add_conditional_edges(
+        "retriever",
+        review_documents,
+        {"relevant": "generation", "not_relevant": "web_search"},
+    )
+    workflow.add_edge("web_search", "generation")
 
-graph = workflow.compile()
+    graph = workflow.compile()
+    return graph
 
-inputs: GraphState = {
-    "question": "Which prompt template gave the highest zero-shot accuracy on Spider in Zhang et al.(2024)?",
-    "chat_history": [],
-    "generation": None,
-    "keyword": "",
-    "web_search": None,
-    "documents": [],
-}
+def main(user_input: str):
+    print(f"[bold green]User:[/bold green] {user_input}")
+    inputs: GraphState = {
+        "question": user_input,
+        "chat_history": [],
+        "generation": None,
+        "keyword": "",
+        "web_search": None,
+        "documents": [],
+    }
+    
+    result = create_workflow().invoke(inputs, stream_mode="values")
+    print(f"[bold green]Assistance:[/bold green] {result["generation"]}")
 
-result = graph.invoke(inputs, stream_mode="values")
-print(result["generation"])
+if __name__ == "__main__":
+    typer.run(main)

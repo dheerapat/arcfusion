@@ -41,12 +41,6 @@ class URLVectorStore:
 
 class PDFVectorStore:
     def __init__(self, pdf_directory="./paper"):
-        """
-        Initialize the PDF Vector Store
-
-        Args:
-            pdf_directory (str): Directory containing PDF files to load
-        """
         self.pdf_directory = pdf_directory
         self.embedding = OpenAIEmbeddings(model="text-embedding-3-large")
         self.text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
@@ -57,7 +51,6 @@ class PDFVectorStore:
         )
         self.retriever = self.vectorstore.as_retriever(kwargs={"k": 3})
 
-        # Load all PDFs from the directory during initialization
         self.load_all_pdfs()
 
     def load_all_pdfs(self):
@@ -75,12 +68,6 @@ class PDFVectorStore:
         print(f"Total PDF files processed: {len(pdf_files)}")
 
     def insert_pdf(self, pdf_path: str):
-        """
-        Insert a single PDF file into the vector store
-
-        Args:
-            pdf_path (str): Path to the PDF file
-        """
         try:
             loader = PyPDFLoader(file_path=pdf_path, mode="single", pages_delimiter="")
 
@@ -101,36 +88,13 @@ class PDFVectorStore:
             print(f"Error loading {pdf_path}: {str(e)}")
 
     def add_single_pdf(self, pdf_path: str):
-        """
-        Add a single PDF file to the existing vector store
-
-        Args:
-            pdf_path (str): Path to the PDF file to add
-        """
         if os.path.exists(pdf_path):
             self.insert_pdf(pdf_path)
         else:
             print(f"PDF file not found: {pdf_path}")
 
     def retrieve_doc(self, question: str):
-        """
-        Retrieve relevant documents based on a question
-
-        Args:
-            question (str): The question to search for
-
-        Returns:
-            List of relevant documents
-        """
         return self.retriever.invoke(question)
-
-    def get_vectorstore_stats(self):
-        """Get basic statistics about the vector store"""
-        try:
-            # This might vary depending on the vector store implementation
-            return f"Vector store initialized with embeddings"
-        except Exception as e:
-            return f"Could not get stats: {str(e)}"
 
 
 if __name__ == "__main__":

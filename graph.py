@@ -3,19 +3,18 @@ import json
 from typing import Optional
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph
-from langchain_core.documents import Document
 from langchain_community.tools import BraveSearch
 from langchain_core.messages import BaseMessage
-from typing import List, Annotated
+from typing import List
 from llm import LLMProcessor
-from vector_store.vector_store import URLVectorStore
+from vector_store.vector_store import PDFVectorStore
 
 
 class GraphState(TypedDict):
     question: str
     chat_history: List[BaseMessage]
     generation: Optional[str]
-    keyword: Optional[str]
+    keyword: str
     web_search: Optional[str]
     documents: List[str]
 
@@ -40,10 +39,10 @@ def generate_keyword(state):
 
 def retriever(state):
     print("---RETRIEVE DOCUMENTS---")
-    vector_store = URLVectorStore()
+    vector_store = PDFVectorStore()
     keyword = state["keyword"]
 
-    results = vector_store.retrieve_doc(keyword)
+    results = vector_store.retrieve_doc(question=keyword)
     documents = state["documents"]
 
     for doc in results:
@@ -112,10 +111,10 @@ workflow.add_edge("web_search", "generation")
 graph = workflow.compile()
 
 inputs: GraphState = {
-    "question": "What are the types of agent memory?",
+    "question": "Which prompt template gave the highest zero-shot accuracy on Spider in Zhang et al.(2024)?",
     "chat_history": [],
     "generation": None,
-    "keyword": None,
+    "keyword": "",
     "web_search": None,
     "documents": [],
 }

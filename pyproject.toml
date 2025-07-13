@@ -10,6 +10,7 @@ dependencies = [
     "langchain-community>=0.3.27",
     "langchain[openai]>=0.3.26",
     "langgraph>=0.5.1",
+    "pypdf>=5.7.0",
     "python-dotenv>=1.1.1",
     "scikit-learn>=1.7.0",
     "typer>=0.16.0",

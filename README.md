@@ -17,7 +17,7 @@ uv run graph.py "<question>"
 uv run graph.py "Which prompt template gave the highest zero-shot accuracy on Spider in Zhang et al.(2024)?"
 ```
 
-### Running as a CLI application
+### Running as a FastAPI application
 
 ```bash
 # clone repository
